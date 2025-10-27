@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "login": {
+      "email": {
+        "invalid": "Invalid email address"
+      }
+    },
+    "register": {}
+  }
+}
