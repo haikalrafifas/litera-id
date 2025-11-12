@@ -2,19 +2,52 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { storeToken } from '@/utilities/client/jwt';
+import {
+  body as userSchema,
+  Login as User,
+} from '@/schemas/login';
+import Cookies from 'js-cookie';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [usernameError, setUsernameError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [formData, setFormData] = useState<User>({
+    username: '',
+    password: '',
+  });
+
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errors, setErrors] = useState<Partial<User>>({});
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+
+    setErrors({});
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    const result = userSchema.safeParse(formData);
+
+    if (!result.success) {
+      const errors: any = result.error.flatten().fieldErrors;
+      const firstErrors: any = {};
+
+      for (const field in errors) {
+        if (errors[field] && errors[field][0]) {
+          firstErrors[field] = errors[field][0];
+        }
+      }
+
+      setErrors(firstErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       // Send login request to your server API
@@ -23,25 +56,26 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
       
       if (response.status === 200) {
-        storeToken(data.data.token.access);
-
-        // Redirect to dashboard or home page after successful login
-        router.push('/app/' + data.data.user.role.toLowerCase());
+        Cookies.set('token', data.data.token.access, { expires: 7 });
+        router.push('/app');
       } else if (response.status === 400) {
-        setError(data.message || 'Validation failed');
-        if (data.errors.username) setUsernameError(data.errors.username);
-        if (data.errors.password) setPasswordError(data.errors.password);
+        if (data.errors.username) setErrors((prev) => ({ ...prev, username: data.errors.username }));
+        if (data.errors.password) setErrors((prev) => ({ ...prev, password: data.errors.password }));
+      } else if (response.status === 404) {
+        setErrorMessage('Akun tidak ditemukan');
       } else {
-        setError(data.message || 'Login failed');
+        setErrorMessage('Galat server');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setErrorMessage('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,30 +83,30 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <h2 className="text-2xl font-semibold text-center text-green-600">Autentikasi</h2>
-        {error && <p className="text-green-600 text-sm text-center mt-2">{error}</p>}
+        {errorMessage && <p className="text-green-600 text-sm text-center mt-2">{errorMessage}</p>}
 
         <form onSubmit={handleSubmit} className="mt-4">
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium text-gray-600">ID Pengguna</label>
             <input
               type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
               required
               autoFocus
             />
-            {usernameError && <p className="text-green-600 text-sm text-center mt-2">{usernameError}</p>}
+            {errors.username && <p className="text-green-600 text-sm text-center mt-2">{errors.username}</p>}
           </div>
 
           <div className="mb-4 relative">
             <label htmlFor="password" className="block text-sm font-medium text-gray-600">Kata Sandi</label>
             <input
               type={passwordVisible ? 'text' : 'password'}
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
               required
             />
@@ -81,26 +115,23 @@ export default function Login() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setPasswordVisible(!passwordVisible)}
             >
-              {passwordVisible ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5M2.49 12c1.11 2.91 3.85 5 7.51 5s6.4-2.09 7.51-5" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5m0 0c-1.11 2.91-3.85 5-7.51 5s-6.4-2.09-7.51-5" />
-                </svg>
-              )}
+              <span className="material-icons mt-2">
+                {passwordVisible ? 'visibility' : 'visibility_off'}
+              </span>
             </button>
-            {passwordError && <p className="text-green-600 text-sm text-center mt-2">{passwordError}</p>}
+            {errors.password && <p className="text-green-600 text-sm text-center mt-2">{errors.password}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+            disabled={isSubmitting}
           >
-            Masuk
+            {isSubmitting ? (
+              <span>Tunggu...</span>
+            ) : (
+              'Masuk'
+            )}
           </button>
         </form>
 

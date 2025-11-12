@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Content from './content';
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/700.css';
 
@@ -22,7 +21,7 @@ export default function RootLayout({ children }: any) {
         />
       </head>
       <body style={{ fontFamily: 'Inter, sans-serif' }}>
-        <Content children={children} />
+        {children}
       </body>
     </html>
   );

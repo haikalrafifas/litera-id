@@ -24,7 +24,7 @@ export const findAccount = async (
   return user;
 };
 
-export const authenticate = (user: User) => {
+export const authenticate = async (user: User) => {
   const payload = {
     id: user.id,
     username: user.username,
@@ -33,7 +33,7 @@ export const authenticate = (user: User) => {
     role: user.role,
   };
 
-  const accessToken = JWTAuth.access.sign(payload);
+  const accessToken = await JWTAuth.access.sign(payload);
 
   return {
     access: accessToken,

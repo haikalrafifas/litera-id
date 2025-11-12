@@ -2,22 +2,51 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  body as userSchema,
+  User,
+} from '@/schemas/user';
 
 export default function Register() {
-  const [username, setUsername] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState<User>({
+    name: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errors, setErrors] = useState<Partial<User>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    setErrors({});
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    const result = userSchema.safeParse(formData);
+
+    if (!result.success) {
+      const errors: any = result.error.flatten().fieldErrors;
+      const firstErrors: any = {};
+
+      for (const field in errors) {
+        if (errors[field] && errors[field][0]) {
+          firstErrors[field] = errors[field][0];
+        }
+      }
+
+      setErrors(firstErrors);
+      setIsSubmitting(false);
       return;
     }
 
@@ -28,61 +57,81 @@ export default function Register() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, name, password }),
+        body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        // Redirect to login page after successful registration
+      if (response.status === 200) {
         router.push('/auth/login');
+      } else if (response.status === 400) {
+        if (!data.errors) {
+          setErrorMessage('Akun sudah terdaftar');
+        } else {
+          if (data.errors.name) {
+            setErrors((prev) => ({ ...prev, name: data.errors.name }));
+          }
+          if (data.errors.username) {
+            setErrors((prev) => ({ ...prev, username: data.errors.username }));
+          }
+          if (data.errors.password) {
+            setErrors((prev) => ({ ...prev, password: data.errors.password }));
+          }
+          if (data.errors.confirmPassword) {
+            setErrors((prev) => ({ ...prev, password: data.errors.confirmPassword }));
+          }
+        }
       } else {
-        setError(data.message || 'Registration failed');
+        setErrorMessage('Galat server');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setErrorMessage('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-        <h2 className="text-2xl font-semibold text-center text-green-600">Buat Akun</h2>
-        {error && <p className="text-green-600 text-sm text-center mt-2">{error}</p>}
+        <h2 className="text-2xl font-semibold text-center text-green-600">Registrasi</h2>
+        {errorMessage && <p className="text-green-600 text-sm text-center mt-2">{errorMessage}</p>}
 
         <form onSubmit={handleSubmit} className="mt-4">
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-600">ID Pengguna</label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
-              required
-              autoFocus
-            />
-          </div>
-
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-600">Nama Lengkap</label>
             <input
               type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
+              required
+              autoFocus
+            />
+            {errors.name && <p className="text-red-600 text-sm text-center mt-2">{errors.name}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-600">ID Pengguna</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
               required
             />
+            {errors.username && <p className="text-red-600 text-sm text-center mt-2">{errors.username}</p>}
           </div>
 
           <div className="mb-4 relative">
             <label htmlFor="password" className="block text-sm font-medium text-gray-600">Kata Sandi</label>
             <input
               type={passwordVisible ? 'text' : 'password'}
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
               required
             />
@@ -91,27 +140,20 @@ export default function Register() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setPasswordVisible(!passwordVisible)}
             >
-              {passwordVisible ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5M2.49 12c1.11 2.91 3.85 5 7.51 5s6.4-2.09 7.51-5" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5m0 0c-1.11 2.91-3.85 5-7.51 5s-6.4-2.09-7.51-5" />
-                </svg>
-              )}
+              <span className="material-icons mt-2">
+                {passwordVisible ? 'visibility' : 'visibility_off'}
+              </span>
             </button>
+            {errors.password && <p className="text-red-600 text-sm text-center mt-2">{errors.password}</p>}
           </div>
 
           <div className="mb-4 relative">
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-600">Konfirmasi Kata Sandi</label>
             <input
               type={confirmPasswordVisible ? 'text' : 'password'}
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-gray-600"
               required
             />
@@ -120,25 +162,23 @@ export default function Register() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
             >
-              {confirmPasswordVisible ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5M2.49 12c1.11 2.91 3.85 5 7.51 5s6.4-2.09 7.51-5" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12c0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4 4-1.8 4-4z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.49 12c1.11-2.91 3.85-5 7.51-5s6.4 2.09 7.51 5m0 0c-1.11 2.91-3.85 5-7.51 5s-6.4-2.09-7.51-5" />
-                </svg>
-              )}
+              <span className="material-icons mt-2">
+                {confirmPasswordVisible ? 'visibility' : 'visibility_off'}
+              </span>
             </button>
+            {errors.confirmPassword && <p className="text-red-600 text-sm text-center mt-2">{errors.confirmPassword}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+            disabled={isSubmitting}
           >
-            Daftar
+            {isSubmitting ? (
+              <span>Tunggu...</span>
+            ) : (
+              'Daftar'
+            )}
           </button>
         </form>
 

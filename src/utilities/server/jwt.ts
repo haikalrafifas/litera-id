@@ -1,4 +1,4 @@
-import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
+import { SignJWT, jwtVerify, JWTPayload } from 'jose';
 
 const {
   ACCESS_TOKEN_SECRET,
@@ -10,29 +10,34 @@ const {
   VERIFY_TOKEN_TTL,
 } = process.env;
 
-export default class JWTAuth {
-  private static ACCESS_SECRET = ACCESS_TOKEN_SECRET || 'access_secret_key';
-  private static REFRESH_SECRET = REFRESH_TOKEN_SECRET || 'refresh_secret_key';
-  private static VERIFY_SECRET = VERIFY_TOKEN_SECRET || 'verify_secret_key';
+function textEncoder(secret: string) {
+  return new TextEncoder().encode(secret);
+}
 
-  private static ACCESS_EXPIRES_IN: SignOptions['expiresIn'] = ACCESS_TOKEN_TTL as any || '15m';
-  private static REFRESH_EXPIRES_IN: SignOptions['expiresIn'] = REFRESH_TOKEN_TTL as any || '7d';
-  private static VERIFY_EXPIRES_IN: SignOptions['expiresIn'] = VERIFY_TOKEN_TTL as any || '1h';
+export default class JWTAuth {
+  private static ACCESS_SECRET = textEncoder(ACCESS_TOKEN_SECRET || 'access_secret_key');
+  private static REFRESH_SECRET = textEncoder(REFRESH_TOKEN_SECRET || 'refresh_secret_key');
+  private static VERIFY_SECRET = textEncoder(VERIFY_TOKEN_SECRET || 'verify_secret_key');
+
+  private static ACCESS_EXPIRES_IN = ACCESS_TOKEN_TTL || '15m';
+  private static REFRESH_EXPIRES_IN = REFRESH_TOKEN_TTL || '7d';
+  private static VERIFY_EXPIRES_IN = VERIFY_TOKEN_TTL || '1h';
 
   /**
    * Create and verify ACCESS tokens
    */
   static access = {
-    sign(payload: object, options: SignOptions = {}): string {
-      return jwt.sign(payload, JWTAuth.ACCESS_SECRET, {
-        expiresIn: JWTAuth.ACCESS_EXPIRES_IN,
-        ...options,
-      });
+    async sign(payload: object): Promise<string> {
+      return await new SignJWT(payload as JWTPayload)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(JWTAuth.ACCESS_EXPIRES_IN)
+        .sign(JWTAuth.ACCESS_SECRET);
     },
 
-    verify<T extends object = JwtPayload>(token: string): T | null {
+    async verify<T extends object = JWTPayload>(token: string): Promise<T | null> {
       try {
-        return jwt.verify(token, JWTAuth.ACCESS_SECRET) as T;
+        const { payload } = await jwtVerify(token, JWTAuth.ACCESS_SECRET);
+        return payload as T;
       } catch {
         return null;
       }
@@ -43,16 +48,17 @@ export default class JWTAuth {
    * Create and verify REFRESH tokens
    */
   static refresh = {
-    sign(payload: object, options: SignOptions = {}): string {
-      return jwt.sign(payload, JWTAuth.REFRESH_SECRET, {
-        expiresIn: JWTAuth.REFRESH_EXPIRES_IN,
-        ...options,
-      });
+    async sign(payload: object): Promise<string> {
+      return await new SignJWT(payload as JWTPayload)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(JWTAuth.REFRESH_EXPIRES_IN)
+        .sign(JWTAuth.REFRESH_SECRET);
     },
 
-    verify<T extends object = JwtPayload>(token: string): T | null {
+    async verify<T extends object = JWTPayload>(token: string): Promise<T | null> {
       try {
-        return jwt.verify(token, JWTAuth.REFRESH_SECRET) as T;
+        const { payload } = await jwtVerify(token, JWTAuth.REFRESH_SECRET);
+        return payload as T;
       } catch {
         return null;
       }
@@ -63,16 +69,17 @@ export default class JWTAuth {
    * Create and verify VERIFICATION tokens
    */
   static verification = {
-    sign(payload: object, options: SignOptions = {}): string {
-      return jwt.sign(payload, JWTAuth.VERIFY_SECRET, {
-        expiresIn: JWTAuth.VERIFY_EXPIRES_IN,
-        ...options,
-      });
+    async sign(payload: object): Promise<string> {
+      return await new SignJWT(payload as JWTPayload)
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime(JWTAuth.VERIFY_EXPIRES_IN)
+        .sign(JWTAuth.VERIFY_SECRET);
     },
 
-    verify<T extends object = JwtPayload>(token: string): T | null {
+    async verify<T extends object = JWTPayload>(token: string): Promise<T | null> {
       try {
-        return jwt.verify(token, JWTAuth.VERIFY_SECRET) as T;
+        const { payload } = await jwtVerify(token, JWTAuth.VERIFY_SECRET);
+        return payload as T;
       } catch {
         return null;
       }

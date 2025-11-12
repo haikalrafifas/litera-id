@@ -10,7 +10,7 @@ export const login = async (req: Request) => {
     return ApiResponse.error(404, 'Account not found');
   }
 
-  const token = authService.authenticate(data);
+  const token = await authService.authenticate(data);
 
   return ApiResponse.success(
     'Successfully logged in',

@@ -17,3 +17,5 @@ export const body = z.object({
   message: 'Passwords must match',
   path: ['confirmPassword'],
 });
+
+export type User = z.infer<typeof body>;
