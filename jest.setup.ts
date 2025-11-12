@@ -22,6 +22,10 @@ try {
 
 // Polyfill Response for Next.js server utilities
 (global as any).Response = class Response {
+  body: any;
+  status: number;
+  headers: Record<string, string>;
+
   constructor(body: any, options: any = {}) {
     this.body = body;
     this.status = options.status || 200;
