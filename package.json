@@ -13,10 +13,12 @@
     "test": "jest --runInBand",
     "test:coverage": "jest --coverage",
     "test:coverage:summary": "jest --coverage --coverageProvider=v8 --coverageReporters=text-summary",
+    "test:e2e": "cypress run",
+    "test:e2e:headed": "cypress run --headed",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:report:json": "eslint . -f json -o tests/eslint-report.json",
-    "lint:report:html": "eslint . -f html -o tests/eslint-report.html"
+    "lint:report:json": "eslint . -f json -o tests/results/eslint-report.json",
+    "lint:report:html": "eslint . -f html -o tests/results/eslint-report.html"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -52,6 +54,7 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",
+    "cypress": "^15.6.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.3",
     "eslint-formatter-html": "^2.7.3",
