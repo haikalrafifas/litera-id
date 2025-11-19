@@ -5,13 +5,15 @@ import { useState, useRef, useEffect } from 'react';
 import useIsMobileView from '@/hooks/useIsMobileView';
 import Cookies from 'js-cookie';
 import { useUserStore } from '@/stores/user';
+import { normalizeUploadPath } from '@/utilities/client/path';
+import { FaBars } from 'react-icons/fa';
 
 export default function AppTopbar({ sidebarOpen, setSidebarOpen }: any) {
   const isMobileView = useIsMobileView();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { name, clearUser } = useUserStore();
+  const { name, image, clearUser } = useUserStore();
 
   const handleLogout = () => {
     Cookies.remove('token');
@@ -45,9 +47,7 @@ export default function AppTopbar({ sidebarOpen, setSidebarOpen }: any) {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle sidebar"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <FaBars />
         </button>
 
         {/* <div className="text-lg font-semibold text-gray-800">Dashboard</div> */}
@@ -59,13 +59,13 @@ export default function AppTopbar({ sidebarOpen, setSidebarOpen }: any) {
         onClick={() => setMenuOpen(!menuOpen)}
       >
         <span className="text-sm text-gray-800">{name}</span>
-        <img
-          // src={userData.image}
-          src="/images/app-icon.png"
-          alt="User Avatar"
-          className="w-8 h-8 rounded-full object-cover"
-          width="48"
-        />
+        {image ? (
+          <img src={normalizeUploadPath(image)} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+        ) : (
+          <span className="text-4xl text-gray-500 font-semibold">
+            {(name || 'U').charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
 
       {/* User Menu Overlay */}

@@ -6,10 +6,12 @@ export default class User extends softDelete(Model) {
   static tableName = 'users';
 
   id!: number;
+  uuid!: string;
   name!: string;
   username!: string;
   password!: string;
-  image?: string;
+  image?: string | null;
+  verified_at?: Date;
 
   // role?: Role;
   role!: string;
@@ -42,7 +44,7 @@ export default class User extends softDelete(Model) {
 
     delete serialized.id;
     delete serialized.password;
-    delete serialized.verified_at;
+    // delete serialized.verified_at;
     delete serialized.deleted_at;
 
     return serialized;

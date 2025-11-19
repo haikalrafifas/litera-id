@@ -24,8 +24,8 @@ export default function AppSidebar({ sidebarOpen = true, setSidebarOpen }: any) 
       newMenus = [
         { redirectTo: '/app', icon: 'analytics', title: 'Analitik' },
         { redirectTo: '/app/books', icon: 'menu_book', title: 'Katalog' },
-        { redirectTo: '/app/borrow', icon: 'add_shopping_cart', title: 'Peminjaman Buku' },
-        { redirectTo: '/app/borrow/history', icon: 'history', title: 'Riwayat Pinjam' },
+        { redirectTo: '/app/loans', icon: 'add_shopping_cart', title: 'Peminjaman Buku' },
+        { redirectTo: '/app/loans/history', icon: 'history', title: 'Riwayat Pinjam' },
       ];
     }
 
@@ -33,14 +33,14 @@ export default function AppSidebar({ sidebarOpen = true, setSidebarOpen }: any) 
       newMenus = [
         { redirectTo: '/app', icon: 'analytics', title: 'Analitik' },
         { redirectTo: '/app/books', icon: 'menu_book', title: 'Katalog' },
-        { redirectTo: '/app/borrow', icon: 'add_shopping_cart', title: 'Peminjaman Buku' },
+        { redirectTo: '/app/loans', icon: 'add_shopping_cart', title: 'Peminjaman Buku' },
         // { redirectTo: '/app/activities', icon: 'calendar_month', title: 'Kegiatan' },
         { redirectTo: '/app/members', icon: 'person', title: 'Anggota' },
       ];
     }
 
     // Check if the newMenus are different from the current sidebarMenus
-    setSidebarMenus((prevMenus: SidebarMenu[]) => {
+    setSidebarMenus((prevMenus) => {
       if (JSON.stringify(prevMenus) !== JSON.stringify(newMenus)) {
         return newMenus;
       }

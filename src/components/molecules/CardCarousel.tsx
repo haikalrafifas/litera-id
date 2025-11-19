@@ -7,8 +7,9 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import ContentCard from '@/components/atoms/ContentCard';
+import type Book from '@/domains/book/model';
 
-export default function CardCarousel({ contents }: any) {
+export default function CardCarousel({ contents }: { contents: Book[] }) {
   const centeredSlides = contents.length === 1;
 
   return (
@@ -28,9 +29,9 @@ export default function CardCarousel({ contents }: any) {
           1024: { slidesPerView: 3 },
         }}
       >
-      {contents?.map((content: any) => (
+      {contents && contents.map((content: Book) => (
         <SwiperSlide key={content.id} className="pb-16">
-          <ContentCard content={content} />
+          <ContentCard books={[content]} />
         </SwiperSlide>
       ))}
     </Swiper>

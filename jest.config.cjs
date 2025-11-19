@@ -8,12 +8,14 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/utilities/server/jwt$': '<rootDir>/tests/__mocks__/jwtMock.ts',
     // map the jose package (and subpaths) to our mock so ESM isn't loaded by Jest
-    '^jose(.*)$': '<rootDir>/tests/__mocks__/joseMock.js'
+    '^jose(.*)$': '<rootDir>/tests/__mocks__/joseMock.js',
+    '^uuid$': '<rootDir>/tests/__mocks__/uuidMock.ts',
   },
   testMatch: ['<rootDir>/tests/**/*.test.ts', '<rootDir>/tests/**/*.test.tsx'],
   transform: {
     '^.+\\.tsx?$': 'ts-jest'
   },
+  // collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/index.{ts,tsx}'],
   globals: {
     'ts-jest': {
       tsconfig: '<rootDir>/tsconfig.jest.json',

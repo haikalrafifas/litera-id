@@ -7,6 +7,11 @@ import {
   Login as User,
 } from '@/schemas/login';
 import Cookies from 'js-cookie';
+import {
+  FaEye,
+  FaEyeSlash,
+  FaChevronLeft,
+} from 'react-icons/fa';
 
 export default function Login() {
   const [formData, setFormData] = useState<User>({
@@ -69,10 +74,12 @@ export default function Login() {
         if (data.errors.password) setErrors((prev) => ({ ...prev, password: data.errors.password }));
       } else if (response.status === 404) {
         setErrorMessage('Akun tidak ditemukan');
+      } else if (response.status === 403) {
+        setErrorMessage('Akun belum diverifikasi');
       } else {
         setErrorMessage('Galat server');
       }
-    } catch (err) {
+    } catch {
       setErrorMessage('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
@@ -115,9 +122,7 @@ export default function Login() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setPasswordVisible(!passwordVisible)}
             >
-              <span className="material-icons mt-2">
-                {passwordVisible ? 'visibility' : 'visibility_off'}
-              </span>
+              {passwordVisible ? <FaEye /> : <FaEyeSlash />}
             </button>
             {errors.password && <p className="text-green-600 text-sm text-center mt-2">{errors.password}</p>}
           </div>
@@ -145,9 +150,7 @@ export default function Login() {
             onClick={() => router.push('/')}
             className="text-sm text-green-600 hover:underline flex items-center justify-center gap-1 mx-auto"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
+            <FaChevronLeft />
             Kembali ke Beranda
           </button>
         </div>

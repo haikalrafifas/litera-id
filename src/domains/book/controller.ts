@@ -15,9 +15,9 @@ export const index = async (req: Request) => {
 };
 
 export const show = async (req: Request) => {
-  const slug = (req as any).validated['slug'];
+  const isbn = (req as any).validated['isbn'];
 
-  const data = await bookService.findBySlug(slug);
+  const data = await bookService.findByISBN(isbn);
   if (!data) {
     return ApiResponse.error(404, 'Book not found');
   }
@@ -30,9 +30,8 @@ export const show = async (req: Request) => {
 
 export const create = async (req: Request) => {
   const payload = (req as any).validated;
-  const creatorId = (req as any).user.id;
   
-  const newRecord = await bookService.create(payload, creatorId);
+  const newRecord = await bookService.create(payload);
 
   return ApiResponse.success(
     'Successfully created new book!',
@@ -42,9 +41,9 @@ export const create = async (req: Request) => {
 
 export const update = async (req: Request) => {
   const payload = (req as any).validated;
-  const slug = payload.slug;
+  const isbn = payload.isbn;
 
-  const data = await bookService.findBySlug(slug);
+  const data = await bookService.findByISBN(isbn);
   if (!data) {
     return ApiResponse.error(404, 'Book not found');
   }
@@ -59,9 +58,9 @@ export const update = async (req: Request) => {
 
 export const destroy = async (req: Request) => {
   const payload = (req as any).validated;
-  const slug = payload.slug;
+  const isbn = payload.isbn;
 
-  const data = await bookService.findBySlug(slug);
+  const data = await bookService.findByISBN(isbn);
   if (!data) {
     return ApiResponse.error(404, 'Book not found');
   }

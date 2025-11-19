@@ -1,7 +1,16 @@
 # Litera.id
 Online library web application made to digitalize librarians and visitors on their daily library operation.
 It is made as a final project for college class of `Software Testing and Quality Assurance`.
-This application prioritizes software testing suites within its development phase.
+This application prioritizes software testing suites within its development phase,
+that adheres to `ISO/IEC 25010` 8 main characteristics:
+1. Functional Suitability
+2. Performance Efficiency
+3. Compatibility
+4. Usability
+5. Reliability
+6. Security
+7. Maintainability
+8. Portability
 
 ## Getting Started
 First, run the development server:

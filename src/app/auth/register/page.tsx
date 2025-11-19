@@ -6,6 +6,10 @@ import {
   body as userSchema,
   User,
 } from '@/schemas/user';
+import {
+  FaEye,
+  FaEyeSlash,
+} from 'react-icons/fa';
 
 export default function Register() {
   const [formData, setFormData] = useState<User>({
@@ -84,7 +88,7 @@ export default function Register() {
       } else {
         setErrorMessage('Galat server');
       }
-    } catch (err) {
+    } catch {
       setErrorMessage('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
@@ -140,9 +144,7 @@ export default function Register() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setPasswordVisible(!passwordVisible)}
             >
-              <span className="material-icons mt-2">
-                {passwordVisible ? 'visibility' : 'visibility_off'}
-              </span>
+              {passwordVisible ? <FaEye /> : <FaEyeSlash />}
             </button>
             {errors.password && <p className="text-red-600 text-sm text-center mt-2">{errors.password}</p>}
           </div>
@@ -162,9 +164,7 @@ export default function Register() {
               className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-600 pt-5"
               onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
             >
-              <span className="material-icons mt-2">
-                {confirmPasswordVisible ? 'visibility' : 'visibility_off'}
-              </span>
+              {confirmPasswordVisible ? <FaEye /> : <FaEyeSlash />}
             </button>
             {errors.confirmPassword && <p className="text-red-600 text-sm text-center mt-2">{errors.confirmPassword}</p>}
           </div>

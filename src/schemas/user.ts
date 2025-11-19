@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import pagination from './pagination';
 
 export const body = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -13,9 +14,16 @@ export const body = z.object({
     .refine((file) => ['image/jpeg', 'image/png'].includes(file.type), {
       message: 'Only JPG or PNG images are allowed',
     }).optional(),
+  verified: z.coerce.boolean().optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords must match',
   path: ['confirmPassword'],
 });
+
+export const param = z.object({
+  username: z.string().min(1, { message: 'Username is required' }),
+});
+
+export const query = pagination;
 
 export type User = z.infer<typeof body>;

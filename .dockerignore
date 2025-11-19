@@ -1,0 +1,33 @@
+# Dependencies
+/node_modules
+
+# Next.js build output
+/.next
+
+# Git
+/.git
+/.gitignore
+
+# Logs and debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+*.log*
+
+# # Environment files
+# .env
+# .env.local
+# .env.development.local
+# .env.production.local
+
+# Docker artifacts
+Dockerfile
+.dockerignore
+
+# Editors/OS specific files
+.vscode
+.DS_Store
+
+# Other project-specific directories you don't need in the final image
+# e.g. /docs, /tests, /scripts

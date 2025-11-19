@@ -7,6 +7,7 @@ const enums = {
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable('users', table => {
     table.bigIncrements('id');
+    table.uuid('uuid').notNullable().unique();
     table.string('username', 32).notNullable().unique();
     table.string('password', 255).notNullable();
     table.string('name', 255).notNullable();

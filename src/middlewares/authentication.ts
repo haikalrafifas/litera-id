@@ -20,16 +20,36 @@ export async function accessToken(req: Request, next: () => Promise<Response>) {
 
   // --- Verify token ---
   try {
-    const decoded = JWTAuth.access.verify(token);
+    const decoded = await JWTAuth.access.verify(token);
     if (!decoded) return expired();
 
-    // Optionally, attach decoded payload to request for downstream usage
-    // @ts-ignore
-    req.user = decoded;
+    (req as any).user = decoded;
 
     return next();
-  } catch (err) {
+  } catch {
     return ApiResponse.error(401, 'Unauthorized');
+  }
+}
+
+export async function optionalAccessToken(req: Request, next: () => Promise<Response>) {
+  const authHeader = req.headers.get('authorization')
+
+  const tokenAbsent = !authHeader || !authHeader.startsWith('Bearer ');
+  if (tokenAbsent) return next();
+
+  const token = authHeader.split(' ')[1]
+  if (!token) return next();
+
+  // --- Verify token ---
+  try {
+    const decoded = await JWTAuth.access.verify(token);
+    if (!decoded) return next();
+
+    (req as any).user = decoded;
+
+    return next();
+  } catch {
+    return next();
   }
 }
 

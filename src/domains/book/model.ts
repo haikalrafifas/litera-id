@@ -6,11 +6,14 @@ export default class Book extends softDelete(Model) {
 
   id!: number;
   isbn!: string;
-  slug!: string;
   title!: string;
-  posted_by!: number;
   image?: string;
-  content?: string;
+  author!: string;
+  publisher!: string;
+  published_at?: Date;
+  category!: string;
+  description?: string;
+  stock!: number;
 
   $formatJson(json: any) {
     const serialized = super.$formatJson(json);

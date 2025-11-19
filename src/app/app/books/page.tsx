@@ -50,7 +50,7 @@ function BooksListInner() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/app/borrow" className="inline-flex items-center gap-2 bg-white border border-green-200 text-green-600 px-4 py-2 rounded-lg shadow-sm">
+          <Link href="/app/loan" className="inline-flex items-center gap-2 bg-white border border-green-200 text-green-600 px-4 py-2 rounded-lg shadow-sm">
             Keranjang ({totalItems})
           </Link>
         </div>

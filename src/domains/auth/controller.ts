@@ -10,6 +10,10 @@ export const login = async (req: Request) => {
     return ApiResponse.error(404, 'Account not found');
   }
 
+  if (!data.verified_at) {
+    return ApiResponse.error(403, 'Account not verified');
+  }
+
   const token = await authService.authenticate(data);
 
   return ApiResponse.success(

@@ -2,12 +2,11 @@ import bcrypt from 'bcrypt';
 import JWTAuth from '@/utilities/server/jwt';
 
 import User from '../user/model';
+import { findByUsername } from '../user/service';
+import { generateUUID } from '@/utilities/server/string';
+import type { TokenUser } from '@/interfaces/token-user';
 
-export const findByUsername = async (
-  username: string,
-): Promise<User | undefined> => {
-  return await User.query().findOne({ username });
-};
+export { findByUsername };
 
 export const findAccount = async (
   username: string,
@@ -25,8 +24,8 @@ export const findAccount = async (
 };
 
 export const authenticate = async (user: User) => {
-  const payload = {
-    id: user.id,
+  const payload: TokenUser = {
+    sub: user.uuid,
     username: user.username,
     name: user.name,
     image: user.image,
@@ -43,6 +42,8 @@ export const authenticate = async (user: User) => {
 export const create = async (
   user: User
 ): Promise<User> => {
+  user.uuid = generateUUID();
   user.password = await bcrypt.hash(user.password, 10);
+  if (user.image) delete user.image;
   return await User.query().insert(user).returning('*');
 };

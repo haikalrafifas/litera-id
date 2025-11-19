@@ -23,11 +23,19 @@ export function checkRole(options: RoleCheckOptions) {
   
     const { only, except } = options;
   
-    if (only && !user.role.some((role: string) => only.includes(role))) {
+    // if (only && !user.role.some((role: string) => only.includes(role))) {
+    //   return ApiResponse.error(403, 'Forbidden');
+    // }
+  
+    // if (except && user.role.some((role: string) => except.includes(role))) {
+    //   return ApiResponse.error(403, 'Forbidden');
+    // }
+
+    if (only && !only.includes(user.role)) {
       return ApiResponse.error(403, 'Forbidden');
     }
-  
-    if (except && user.role.some((role: string) => except.includes(role))) {
+
+    if (except && except.includes(user.role)) {
       return ApiResponse.error(403, 'Forbidden');
     }
   

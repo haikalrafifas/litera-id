@@ -6,7 +6,6 @@ export async function up(knex: Knex): Promise<void> {
     table.string('isbn', 13).notNullable().unique();
     table.string('title', 255);
     table.string('image', 255).nullable();
-    table.string('snippets', 255).nullable();
     table.string('author', 255).nullable();
     table.string('publisher', 255).nullable();
     table.timestamp('published_at').nullable();

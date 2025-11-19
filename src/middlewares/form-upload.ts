@@ -41,7 +41,7 @@ export default function parseFormData() {
         (req as any).parsed = { text: fields, file: files };
 
         return next();
-      } catch (err) {
+      } catch {
         return ApiResponse.error(500, 'Error parsing form data');
       }
     } else if (usingUpload(req, 'application/json')) {

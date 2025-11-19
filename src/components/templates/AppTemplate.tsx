@@ -14,6 +14,9 @@ export default function AppTemplate({ children }: any) {
     loadFromCookie();
   }, [loadFromCookie]);
 
+  const { role } = useUserStore();
+  if (role === null) children = <>Memuat...</>;
+
   return (
     <div className="flex min-h-screen bg-gray-100 text-black">
       <AppSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
