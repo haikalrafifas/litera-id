@@ -5,8 +5,8 @@ export default function MemberDashboard() {
   const { name } = useUserStore();
 
   const analytics = [
-    { title: 'Buku Dipinjam', value: 12, color: 'bg-blue-500', },
-    { title: 'Terlambat Dikembalikan', value: 1, color: 'bg-red-500', },
+    { title: 'Buku Dipinjam', value: 0, color: 'bg-blue-500', },
+    { title: 'Terlambat Dikembalikan', value: 0, color: 'bg-red-500', },
   ];
 
   return (

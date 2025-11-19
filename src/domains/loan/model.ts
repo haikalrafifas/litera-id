@@ -1,20 +1,46 @@
 import Model from '@/database/orm';
 import softDelete from '@/database/soft-delete';
+import Book from '../book/model';
+import User from '../user/model';
 
 export default class Loan extends softDelete(Model) {
   static tableName = 'loans';
 
   id!: number;
   uuid!: string;
-  user_id!: string;
-  book_id!: string;
+  user_id!: number;
+  book_id!: number;
   qty!: number;
-  loan_date!: Date;
-  due_date!: Date;
+  loan_date!: Date | null;
+  due_date!: Date | null;
   return_date?: Date | null;
   notes?: string;
   status!: 'requested' | 'approved' | 'cancelled' | 'denied' |
         'loaned' | 'returned' | 'overdue';
+
+  book?: Book;
+  user?: User;
+
+  static get relationMappings() {
+    return {
+      book: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Book,
+        join: {
+          from: 'loans.book_id',
+          to: 'books.id',
+        },
+      },
+      user: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: User,
+        join: {
+          from: 'loans.user_id',
+          to: 'users.id',
+        },
+      },
+    };
+  }
 
   $formatJson(json: any) {
     const serialized = super.$formatJson(json);
@@ -22,6 +48,8 @@ export default class Loan extends softDelete(Model) {
     serialized.qty = Number(serialized.qty);
 
     delete serialized.id;
+    delete serialized.user_id;
+    delete serialized.book_id;
     delete serialized.deleted_at;
 
     return serialized;

@@ -12,7 +12,7 @@ export interface CartItem {
   stock?: number;
 }
 
-interface BorrowContextValue {
+interface LoanContextValue {
   items: CartItem[];
   add: (item: CartItem) => void;
   remove: (id: string) => void;
@@ -21,9 +21,9 @@ interface BorrowContextValue {
   totalItems: number;
 }
 
-const BorrowContext = createContext<BorrowContextValue | null>(null);
+const LoanContext = createContext<LoanContextValue | null>(null);
 
-export function BorrowProvider({ children }: { children: ReactNode }) {
+export function LoanProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   function add(item: CartItem) {
@@ -56,11 +56,11 @@ export function BorrowProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
 
-  return <BorrowContext.Provider value={{ items, add, remove, clear, updateQty, totalItems }}>{children}</BorrowContext.Provider>;
+  return <LoanContext.Provider value={{ items, add, remove, clear, updateQty, totalItems }}>{children}</LoanContext.Provider>;
 }
 
-export function useBorrowCart() {
-  const ctx = useContext(BorrowContext);
-  if (!ctx) throw new Error('useBorrowCart must be used within BorrowProvider');
+export function useLoanCart() {
+  const ctx = useContext(LoanContext);
+  if (!ctx) throw new Error('useLoanCart must be used within LoanProvider');
   return ctx;
 }

@@ -16,10 +16,13 @@ export const fetchPaginated = async (
   return generatePaginatedData<User>(baseQuery, params);
 };
 
-export const findById = async (
-  userId: number,
+export const findByUuid = async (
+  userId: string,
 ): Promise<User | undefined> => {
-  return await User.query().findById(userId).whereNull('deleted_at');
+  return await User.query()
+    .where('uuid', userId)
+    .whereNull('deleted_at')
+    .first();
 };
 
 export const findByUsername = async (

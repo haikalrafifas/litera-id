@@ -3,9 +3,9 @@ import * as userService from './service';
 import { authenticate } from '../auth/service';
 
 export const show = async (req: Request) => {
-  const userId = (req as any).user.id;
+  const userId = (req as any).user.sub;
 
-  const data = await userService.findById(userId);
+  const data = await userService.findByUuid(userId);
   if (!data) {
     return ApiResponse.error(404, 'User not found');
   }
@@ -18,9 +18,9 @@ export const show = async (req: Request) => {
 
 export const update = async (req: Request) => {
   const payload = (req as any).validated;
-  const userId = (req as any).user.id;
+  const userId = (req as any).user.sub;
 
-  const data = await userService.findById(userId);
+  const data = await userService.findByUuid(userId);
   if (!data) {
     return ApiResponse.error(404, 'User not found');
   }

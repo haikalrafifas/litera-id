@@ -7,6 +7,7 @@ interface FileUploadProps {
   preview?: string | null;
   error?: string;
   helperText?: string;
+  currentImage?: string;
 }
 
 export default function FileUpload({ label, accept = 'image/*', onChange, preview, error, helperText }: FileUploadProps) {

@@ -2,13 +2,13 @@ import ApiResponse from '@/utilities/server/response';
 import * as loanService from './service';
 
 export const index = async (req: Request) => {
-  const { page, limit } = (req as any).validated;
+  const { page, limit, status } = (req as any).validated;
   const user = (req as any).user;
 
   const userId = user.role !== 'admin' ? user.id : undefined;
 
   const { data, pagination } = await loanService.fetchPaginated(
-    { page, limit }, userId,
+    { page, limit }, userId, status,
   );
 
   return ApiResponse.success(

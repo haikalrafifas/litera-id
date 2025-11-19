@@ -5,10 +5,10 @@ export default function AdminDashboard() {
   const { name } = useUserStore();
 
   const analytics = [
-    { title: 'Total Buku', value: 5, color: 'bg-green-500', },
-    { title: 'Total Anggota', value: 3, color: 'bg-red-500', },
-    { title: 'Buku Dipinjam', value: 12, color: 'bg-blue-500', },
-    { title: 'Pending Permintaan', value: 9, color: 'bg-yellow-500', },
+    { title: 'Total Buku', value: 3, color: 'bg-green-500', },
+    { title: 'Total Anggota', value: 1, color: 'bg-red-500', },
+    { title: 'Buku Dipinjam', value: 0, color: 'bg-blue-500', },
+    { title: 'Pending Permintaan', value: 1, color: 'bg-yellow-500', },
   ];
 
   return (
