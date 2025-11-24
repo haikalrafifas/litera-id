@@ -117,7 +117,9 @@ export default function Register() {
           </div>
 
           <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-600">ID Pengguna</label>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-600">
+              Username
+            </label>
             <input
               type="text"
               name="username"
