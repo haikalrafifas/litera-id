@@ -1,104 +1,141 @@
 /**
- * Unit tests for auth service (login/findAccount).
- * findAccount returns the User object; controller calls authenticate separately for token.
+ * Unit tests for auth service using Vitest.
+ * Tests findAccount() behavior for valid, missing, and invalid users.
  */
-import { jest } from '@jest/globals';
 
-// Mock bcrypt globally to control password verification
-jest.mock('bcrypt', () => ({
-  hash: jest.fn(async () => 'hashed'),
-  compare: jest.fn(async () => true)  // default to true; override in tests
-}));
+import { describe, test, expect, beforeEach, vi, type Mock } from 'vitest';
 
-// Removed jest.mock for JWT; using __mocks__/jwtMock.ts
+/* ------------------------- MOCKS ------------------------- */
 
-// Mock ORM and soft-delete before importing any domain code
-jest.mock('@/database/orm', () => {
-  // create a fake Model with a mutable static __query object supporting chaining
+/** Mock bcrypt (CommonJS style) */
+vi.mock('bcrypt', () => {
+  const hash = vi.fn(async () => 'hashed');
+  const compare = vi.fn(async () => true); // override per test
+
+  return {
+    __esModule: false,
+    default: { hash, compare },
+    hash,
+    compare,
+  };
+});
+
+/** Mock ORM model used internally */
+vi.mock('@/database/orm', () => {
   class Model {
     static __query = {
-      findOne: jest.fn(),
-      insert: jest.fn(() => ({
-        returning: jest.fn(() => ({ id: 'mock-id', username: 'mock-user', toJSON: () => ({ id: 'mock-id', username: 'mock-user' }) }))
+      findOne: vi.fn(),
+      insert: vi.fn(() => ({
+        returning: vi.fn(() => ({
+          id: 'mock-id',
+          username: 'mock-user',
+          toJSON() {
+            return { id: 'mock-id', username: 'mock-user' };
+          },
+        })),
       })),
-      findById: jest.fn()
+      findById: vi.fn(),
     };
+
     static query() {
       return this.__query;
     }
   }
+
   return { __esModule: true, default: Model };
 });
-jest.mock('@/database/soft-delete', () => ({
+
+/** soft-delete → no-op */
+vi.mock('@/database/soft-delete', () => ({
   __esModule: true,
-  default: (Base: any) => Base
+  default: (Base: any) => Base,
 }));
 
-// Now import modules under test
+/* -------------------- IMPORT MODULE UNDER TEST -------------------- */
+
 import * as authService from '../../../src/domains/auth/service';
 import ormModule from '@/database/orm';
 
-// Support both `import orm from '.../orm'` shapes: module.default or module
-const Model = (ormModule as any).default ?? (ormModule as any);
+const Model = (ormModule as any).default ?? ormModule;
 
-const setQueryMock = (name: 'findOne' | 'insert' | 'findById', impl: any) => {
-  Model.__query[name] = jest.fn(impl);
+const setQueryMock = (
+  name: 'findOne' | 'insert' | 'findById',
+  impl: any,
+) => {
+  Model.__query[name] = vi.fn(impl);
   return Model.__query[name];
 };
 
+/* ------------------------- BEFORE EACH ------------------------- */
+
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
-describe('auth service - findAccount (login)', () => {
+/* ==========================================================
+   AUTH SERVICE — findAccount()
+========================================================== */
+
+describe('auth service - findAccount', () => {
   test('returns user when credentials are valid', async () => {
-    // Arrange - make User.query().findOne return a DB-like user with toJSON()
     const dbUser = {
       id: 'u3',
       username: 'loginuser',
       password: 'hashed',
-      toJSON() { return { id: 'u3', username: 'loginuser' }; }
+      toJSON() {
+        return { id: 'u3', username: 'loginuser' };
+      },
     };
+
     setQueryMock('findOne', async () => dbUser);
 
-    // Mock bcrypt.compare to return true for valid password
-    const bcrypt = require('bcrypt');
-    bcrypt.compare.mockResolvedValue(true);
+    const bcrypt = await import('bcrypt');
+    (bcrypt.compare as Mock).mockResolvedValue(true);
 
-    // Act - call the exported findAccount function
     const fn = (authService as any).findAccount;
-    if (!fn || typeof fn !== 'function') throw new Error('authService.findAccount not exported - update test');
+    if (typeof fn !== 'function') throw new Error('findAccount missing');
+
     const result = await fn('loginuser', 'p');
 
-    // Assert
-    expect(Model.__query.findOne).toHaveBeenCalledWith({ username: 'loginuser' });
+    expect(Model.__query.findOne).toHaveBeenCalledWith({
+      username: 'loginuser',
+    });
     expect(bcrypt.compare).toHaveBeenCalled();
-    expect(result).toHaveProperty('id', 'u3');
-    expect(result).toHaveProperty('username', 'loginuser');
-    // Removed expect(result.password).toBeUndefined(); as service returns user with password
+
+    expect(result).toMatchObject({
+      id: 'u3',
+      username: 'loginuser',
+    });
   });
 
   test('returns null when user not found', async () => {
     setQueryMock('findOne', async () => null);
 
     const fn = (authService as any).findAccount;
-    if (!fn || typeof fn !== 'function') throw new Error('authService.findAccount not exported - update test');
+    if (typeof fn !== 'function') throw new Error('findAccount missing');
 
     const result = await fn('noone', 'x');
     expect(result).toBeNull();
   });
 
-  test('returns null on invalid password', async () => {
-    setQueryMock('findOne', async (username: string) => ({ id: 'u4', username, password: 'hashed', toJSON() { return { id: 'u4', username }; } }));
+  test('returns null when password invalid', async () => {
+    setQueryMock('findOne', async (username: string) => ({
+      id: 'u4',
+      username,
+      password: 'hashed',
+      toJSON() {
+        return { id: 'u4', username };
+      },
+    }));
 
-    // Mock bcrypt.compare to return false for invalid password
-    const bcrypt = require('bcrypt');
-    bcrypt.compare.mockResolvedValue(false);
+    const bcrypt = await import('bcrypt');
+    (bcrypt.compare as Mock).mockResolvedValue(false);
 
     const fn = (authService as any).findAccount;
-    if (!fn || typeof fn !== 'function') throw new Error('authService.findAccount not exported - update test');
+    if (typeof fn !== 'function') throw new Error('findAccount missing');
 
     const result = await fn('loginuser', 'bad');
+
     expect(result).toBeNull();
   });
 });

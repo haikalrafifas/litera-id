@@ -13,11 +13,16 @@ export const generatePaginatedData = async <T>(
 ): Promise<PaginatedResult<T>> => {
   const offset = (page - 1) * limit;
 
-  const countResult = await baseQuery.clone()
-    .count('id as total')
-    .first();
+  // const countResult = await baseQuery.clone()
+  //   .clear('withGraphFetched')
+  //   .clearSelect()
+  //   .clearOrder()
+  //   .count('id as total')
+  //   .first();
+
+  // const total = Number((countResult as any)?.total ?? 0);
   
-  const total = Number((countResult as any)?.total ?? 0);
+  const total = await baseQuery.clone().clear('withGraphFetched').resultSize();
 
   const items = await baseQuery.clone()
     .orderBy('created_at', 'desc')

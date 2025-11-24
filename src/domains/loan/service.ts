@@ -1,27 +1,29 @@
 import Loan from './model';
 import Book from '../book/model';
+import User from '../user/model';
 import type {
   PaginatedResult,
   PaginationInput,
 } from '@/interfaces/pagination';
 import { generateUUID } from '@/utilities/server/string';
 import { generatePaginatedData } from '@/utilities/server/pagination';
+import { findByUuid as findUserByUuid } from '../user/service';
 
 const DEFAULT_DUE_DAYS = 14;
 
 export const fetchPaginated = async (
   params: PaginationInput,
   userId?: number,
-  status?: string,
+  status?: Loan['status'][],
 ): Promise<PaginatedResult<Loan>> => {
   let baseQuery = Loan.query()
-    .whereNull('loans.deleted_at')
+    .whereNull(`${Loan.tableName}.deleted_at`)
     .withGraphFetched('[book, user]')
     .modifyGraph('book', (builder) => {
-      builder.whereNull('deleted_at');
+      builder.whereNull(`${Book.tableName}.deleted_at`);
     })
     .modifyGraph('user', (builder) => {
-      builder.whereNull('deleted_at');
+      builder.whereNull(`${User.tableName}.deleted_at`);
     });
 
   if (userId) {
@@ -29,7 +31,7 @@ export const fetchPaginated = async (
   }
 
   if (status) {
-    baseQuery = baseQuery.where({ status });
+    baseQuery = baseQuery.whereIn('status', status);
   }
 
   return generatePaginatedData<Loan>(baseQuery, params);
@@ -46,11 +48,15 @@ export const findByUuid = async (
 
 export const create = async (
   payload: any,
-  userId: number,
+  userUuid: string,
 ): Promise<Loan> => {
+  const user = await findUserByUuid(userUuid);
+  if (!user) throw new Error('User not found');
+  const userId = user.id;
+
   // Find book by ISBN and validate stock
   const book = await Book.query()
-    .findOne({ isbn: payload.book_isbn })
+    .findOne({ isbn: payload.isbn })
     .whereNull('deleted_at');
 
   if (!book) {
@@ -68,8 +74,7 @@ export const create = async (
     qty: payload.qty,
     notes: payload.notes,
     status: 'requested',
-    loan_date: null,
-    due_date: null,
+    requested_at: new Date(),
   };
 
   return await Loan.query().insert(loanData).returning('*');
@@ -101,8 +106,8 @@ export const update = async (
       if (book.stock < entity.qty) {
         throw new Error('Insufficient book stock');
       }
-      updateData.loan_date = new Date();
-      updateData.due_date = new Date(
+      updateData.loaned_at = new Date();
+      updateData.due_at = new Date(
         Date.now() + DEFAULT_DUE_DAYS * 24 * 60 * 60 * 1000,
       );
       // Reduce stock
@@ -112,7 +117,7 @@ export const update = async (
     // When returning, restore stock
     if (payload.status === 'returned' && 
         (entity.status === 'loaned' || entity.status === 'overdue')) {
-      updateData.return_date = new Date();
+      updateData.returned_at = new Date();
       // Restore stock
       await book.$query().patch({ stock: book.stock + entity.qty });
     }
@@ -120,9 +125,9 @@ export const update = async (
     // When denying or cancelling from requested, no stock change needed
     if ((payload.status === 'denied' || payload.status === 'cancelled') && 
         entity.status === 'requested') {
-      updateData.loan_date = null;
-      updateData.due_date = null;
-      updateData.return_date = null;
+      updateData.requested_at = null;
+      updateData.due_at = null;
+      updateData.returned_at = null;
     }
   }
 

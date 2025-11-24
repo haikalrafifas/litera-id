@@ -7,6 +7,7 @@ import Badge from '@/components/atoms/app/Badge';
 import Pagination from '@/components/atoms/app/Pagination';
 import Select from '@/components/atoms/app/Select';
 import Input from '@/components/atoms/app/Input';
+import { normalizeUploadPath } from '@/utilities/client/path';
 
 interface Loan {
   uuid: string;
@@ -94,7 +95,11 @@ export default function AdminLoanHistory() {
       
       if (result.success) {
         setLoans(result.data);
-        setPagination(result.pagination);
+        setPagination({
+          ...result.pagination,
+          page: result.pagination.currentPage,
+          limit: result.pagination.total / result.pagination.totalPages,
+        });
       }
     } catch (error) {
       console.error('Failed to fetch loans:', error);
@@ -127,7 +132,7 @@ export default function AdminLoanHistory() {
       render: (loan: Loan) => (
         <div className="flex items-center gap-3">
           <img
-            src={loan.book?.image || '/images/book-placeholder.png'}
+            src={normalizeUploadPath(loan.book?.image) || '/images/placeholder.png'}
             alt={loan.book?.title}
             className="w-10 h-14 object-cover rounded"
           />

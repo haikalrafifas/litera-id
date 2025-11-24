@@ -10,11 +10,15 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('uuid').notNullable().unique();
     table.bigInteger('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
     table.bigInteger('book_id').notNullable().references('id').inTable('books').onDelete('CASCADE');
-    table.timestamp('loan_date').defaultTo(knex.fn.now());
-    table.timestamp('due_date').notNullable();
-    table.timestamp('return_date').nullable();
+    table.timestamp('requested_at').defaultTo(knex.fn.now());
+    table.timestamp('approved_at');
+    table.timestamp('loaned_at');
+    table.timestamp('due_at');
+    table.timestamp('cancelled_at');
+    table.timestamp('denied_at');
+    table.timestamp('returned_at');
     table.bigInteger('qty').defaultTo(0);
-    table.text('notes').nullable();
+    table.text('notes');
     table.enum('status', [
         'requested', 'approved', 'cancelled', 'denied',
         'loaned', 'returned', 'overdue',

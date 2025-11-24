@@ -11,9 +11,13 @@ export default class Loan extends softDelete(Model) {
   user_id!: number;
   book_id!: number;
   qty!: number;
-  loan_date!: Date | null;
-  due_date!: Date | null;
-  return_date?: Date | null;
+  requested_at!: Date | null;
+  approved_at!: Date | null;
+  loaned_at!: Date | null
+  due_at!: Date | null;
+  cancelled_at!: Date | null
+  denied_at!: Date | null;
+  returned_at!: Date | null;
   notes?: string;
   status!: 'requested' | 'approved' | 'cancelled' | 'denied' |
         'loaned' | 'returned' | 'overdue';

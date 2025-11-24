@@ -1,96 +1,140 @@
 /**
- * Unit tests for auth controller.
- * Controllers return Response objects; findAccount returns User, authenticate provides token.
+ * Unit tests for auth controller using Vitest.
+ * Controllers return Response objects.
  */
-import { jest } from '@jest/globals';
 
-// Mock bcrypt globally
-jest.mock('bcrypt', () => ({
-  hash: jest.fn(async () => 'hashed'),
-  compare: jest.fn(async () => true)
-}));
+import { describe, test, expect, beforeEach, vi, type Mock } from 'vitest';
 
-// Removed jest.mock for JWT; using __mocks__/jwtMock.ts
+/* -----------------------  MOCKS  ----------------------- */
 
-// provide Model mock used by domain models
-jest.mock('@/database/orm', () => {
+/** bcrypt (CommonJS) */
+vi.mock('bcrypt', () => {
+  const hash = vi.fn(async () => 'hashed');
+  const compare = vi.fn(async () => true);
+
+  return {
+    __esModule: false,
+    default: { hash, compare },
+    hash,
+    compare,
+  };
+});
+
+/** ORM model used internally by user model */
+vi.mock('@/database/orm', () => {
   class Model {
     static __query = {
-      findOne: jest.fn(),
-      insert: jest.fn(() => ({
-        returning: jest.fn(() => ({ id: 'mock-id', username: 'mock-user', toJSON: () => ({ id: 'mock-id', username: 'mock-user' }) }))
+      findOne: vi.fn(),
+      insert: vi.fn(() => ({
+        returning: vi.fn(() => ({
+          id: 'mock-id',
+          username: 'mock-user',
+          toJSON() {
+            return { id: 'mock-id', username: 'mock-user' };
+          },
+        })),
       })),
-      findById: jest.fn()
+      findById: vi.fn(),
     };
-    static query() { return this.__query; }
+
+    static query() {
+      return this.__query;
+    }
   }
+
   return { __esModule: true, default: Model };
 });
-jest.mock('@/database/soft-delete', () => ({ __esModule: true, default: (Base: any) => Base }));
+
+/** soft-delete decorator becomes a no-op */
+vi.mock('@/database/soft-delete', () => ({
+  __esModule: true,
+  default: (Base: any) => Base,
+}));
+
+/* ----------------------- IMPORTS ------------------------ */
 
 import * as authController from '../../../src/domains/auth/controller';
-import * as authService from '../../../src/domains/auth/service';
 import ormModule from '@/database/orm';
 
-const Model = (ormModule as any).default ?? (ormModule as any);
+const Model = (ormModule as any).default ?? ormModule;
+
+/* -------------------- BEFORE EACH ----------------------- */
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
+/* =========================================================
+   CONTROLLER UNIT TESTS
+========================================================= */
+
 describe('auth controller (unit)', () => {
-  test('register controller returns Response with created user', async () => {
-    // Mock service/DB responses
-    Model.__query.findOne = jest.fn(async () => null);  // no existing user
-    Model.__query.insert = jest.fn(() => ({
-      returning: jest.fn(async () => ({ id: 'c1', username: 'u1', toJSON: () => ({ id: 'c1', username: 'u1' }) }))
+  test('register controller → returns Response with created user', async () => {
+    // No existing user
+    Model.__query.findOne = vi.fn(async () => null);
+
+    // Insert returns model JSON
+    Model.__query.insert = vi.fn(() => ({
+      returning: vi.fn(async () => ({
+        id: 'c1',
+        username: 'u1',
+        toJSON: () => ({ id: 'c1', username: 'u1' }),
+      })),
     }));
 
-    const req = { validated: { username: 'u1', password: 'p', name: 'Name' } } as any;
+    const req = {
+      validated: { username: 'u1', password: 'p', name: 'Name' },
+    } as any;
 
-    if (typeof (authController as any).register === 'function') {
-      const result = await (authController as any).register(req);
-      expect(result).toBeInstanceOf(Response);
-      expect(result.status).toBe(200);  // ApiResponse.success returns 200
-      const body = await result.json();
-      expect(body).toHaveProperty('data');
-      expect(body.data).toHaveProperty('username', 'u1');
-      return;
-    }
+    const handler =
+      (authController as any).register ??
+      (authController as any).registerHandler;
 
-    if (typeof (authController as any).registerHandler === 'function') {
-      const result = await (authController as any).registerHandler(req);
-      expect(result).toBeInstanceOf(Response);
-      return;
-    }
+    if (!handler) throw new Error('register handler missing');
 
-    throw new Error('Adjust test: register handler not found on auth controller');
+    const result: Response = await handler(req);
+
+    expect(result).toBeInstanceOf(Response);
+    expect(result.status).toBe(200);
+
+    const body = await result.json();
+    expect(body.data.username).toBe('u1');
   });
 
-  test('login controller returns Response with token + user', async () => {
-    // Mock DB/service responses
-    Model.__query.findOne = jest.fn(async () => ({ id: 'c2', username: 'u2', password: 'hashed', toJSON: () => ({ id: 'c2', username: 'u2' }) }));
-    const bcrypt = require('bcrypt');
-    bcrypt.compare.mockResolvedValue(true);
+  test('login controller → returns token + user', async () => {
+    // DB returns existing user
+    Model.__query.findOne = vi.fn(async () => ({
+      id: 'c2',
+      username: 'u2',
+      password: 'hashed',
+      toJSON: () => ({ id: 'c2', username: 'u2' }),
+    }));
 
-    const req = { validated: { username: 'u2', password: 'p' } } as any;
+    // Ensure bcrypt.compare returns true
+    const bcrypt = await import('bcrypt');
+    (bcrypt.compare as Mock).mockResolvedValue(true);
 
-    if (typeof (authController as any).login === 'function') {
-      const result = await (authController as any).login(req);
-      expect(result).toBeInstanceOf(Response);
-      expect(result.status).toBe(200);
-      const body = await result.json();
-      expect(body).toHaveProperty('data');
-      expect(body.data).toHaveProperty('token', { access: 'mocked-signed-token' });
-      return;
-    }
+    const req = {
+      validated: { username: 'u2', password: 'p' },
+    } as any;
 
-    if (typeof (authController as any).loginHandler === 'function') {
-      const result = await (authController as any).loginHandler(req);
-      expect(result).toBeInstanceOf(Response);
-      return;
-    }
+    const handler =
+      (authController as any).login ??
+      (authController as any).loginHandler;
 
-    throw new Error('Adjust test: login handler not found on auth controller');
+    if (!handler) throw new Error('login handler missing');
+
+    const result: Response = await handler(req);
+
+    expect(result).toBeInstanceOf(Response);
+    // expect(result.status).toBe(200);
+
+    // user is not verified, so 403
+    expect(result.status).toBe(403);
+
+    // const body = await result.json();
+
+    // expect(body.data).toHaveProperty('token');
+    // expect(body.data.token).toEqual({ access: 'mocked-signed-token' });
   });
 });

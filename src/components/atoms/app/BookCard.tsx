@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useLoanCart } from '@/contexts/LoanContext';
+import { useLoanStore } from '@/stores/loan';
 import { useUserStore } from '@/stores/user';
+import { useToast } from '@/hooks/use-toast';
+import { normalizeUploadPath } from '@/utilities/client/path';
 
 export default function BookCard({ book, compact = false }: any) {
-  const { add } = useLoanCart();
+  const { add } = useLoanStore();
   const { role } = useUserStore();
+  const { toast } = useToast();
 
   const handleAdd = () => {
     if ((book.stock ?? 0) <= 0) return;
@@ -16,13 +19,19 @@ export default function BookCard({ book, compact = false }: any) {
       return;
     }
     add({
-      id: String(book.id ?? book.isbn),
       isbn: book.isbn,
       title: book.title,
       author: book.author,
-      cover: book.cover ?? book.image,
-      quantity: 1,
+      publisher: book.publisher,
+      category: book.category,
+      image: book.image,
+      qty: 1,
       stock: book.stock,
+    });
+    
+    toast({
+      title: "Added to Cart",
+      description: `${book.title} has been added to your loan cart.`,
     });
   };
 
@@ -30,7 +39,7 @@ export default function BookCard({ book, compact = false }: any) {
     <div className={`bg-white rounded-lg shadow-sm hover:shadow-md overflow-hidden flex transition-shadow ${compact ? 'flex-row' : 'flex-col'}`}>
       <div className={`${compact ? 'w-24 sm:w-32' : 'w-full'} ${compact ? 'h-32 sm:h-40' : 'h-48'} flex-shrink-0 bg-gray-100`}>
         <img 
-          src={book.cover ?? book.image ?? '/images/placeholder.png'} 
+          src={normalizeUploadPath(book.image) ?? '/images/placeholder.png'} 
           alt={book.title} 
           className="w-full h-full object-cover" 
         />

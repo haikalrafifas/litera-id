@@ -7,8 +7,8 @@ export interface CartItem {
   isbn?: string;
   title: string;
   author?: string;
-  cover?: string;
-  quantity: number;
+  image?: string;
+  qty: number;
   stock?: number;
 }
 
@@ -32,7 +32,7 @@ export function LoanProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((p) =>
           p.id === item.id
-            ? { ...p, quantity: Math.min((p.quantity || 0) + item.quantity, item.stock ?? 9999) }
+            ? { ...p, quantity: Math.min((p.qty || 0) + item.qty, item.stock ?? 9999) }
             : p
         );
       }
@@ -54,7 +54,7 @@ export function LoanProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const totalItems = items.reduce((s, i) => s + i.qty, 0);
 
   return <LoanContext.Provider value={{ items, add, remove, clear, updateQty, totalItems }}>{children}</LoanContext.Provider>;
 }

@@ -34,7 +34,7 @@ export const show = async (req: Request) => {
 
 export const create = async (req: Request) => {
   const payload = (req as any).validated;
-  const userId = (req as any).user.id;
+  const userId = (req as any).user.sub;
   
   const newRecord = await loanService.create(
     payload, userId,
